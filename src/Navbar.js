@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth } from "./firebase";
 import "./Navbar.css"; // we'll create this next
 
+
 function Navbar({ user }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ function Navbar({ user }) {
         <div className="navbar-links">
           <Link to="/" className="nav-item">Dashboard</Link>
           <Link to="/pricing" className="nav-item">Pricing</Link>
+          <Link to="/contact" className="nav-item">Contact</Link>
+
 
           {/* PRO Community */}
           <Link to="/community" className="nav-item">
@@ -61,6 +64,10 @@ function Navbar({ user }) {
           <Link to="/pricing" className="mobile-item" onClick={() => setMenuOpen(false)}>
             Pricing
           </Link>
+          <Link to="/contact" className="mobile-item" onClick={() => setMenuOpen(false)}>
+  Contact
+</Link>
+
           <Link to="/community" className="mobile-item" onClick={() => setMenuOpen(false)}>
             Community <span className="pro-badge">PRO</span>
           </Link>
