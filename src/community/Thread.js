@@ -5,25 +5,49 @@ import {
   getDoc,
   collection,
   addDoc,
+  updateDoc,
+  deleteDoc,
   query,
   orderBy,
   getDocs,
+  startAfter,
+  limit,
+  increment,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import "./community.css";
+import Reactions from "../community/Reactions";
 import axios from "axios";
+import "./community.css";
 
 function Thread() {
-  const { id } = useParams(); // thread ID
+  const { id } = useParams(); // thread ID from URL
+
   const [post, setPost] = useState(null);
+
+  // Replies
   const [replies, setReplies] = useState([]);
   const [replyText, setReplyText] = useState("");
+
+  // Pagination
+  const REPLIES_PAGE_SIZE = 20;
+  const [lastDoc, setLastDoc] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const apiBase = process.env.REACT_APP_API_URL;
 
-  // ===========================
-  // 1. Load the thread/post
-  // ===========================
+  // Emoji → Firestore key
+  const reactionMap = {
+    "👍": "like",
+    "😂": "funny",
+    "❤️": "heart",
+    "🔥": "fire",
+    "👏": "helpful",
+  };
+
+  /* ==========================================================
+     1️⃣ LOAD THREAD POST
+     ========================================================== */
   useEffect(() => {
     async function fetchPost() {
       try {
@@ -31,46 +55,110 @@ function Thread() {
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
-          setPost({ id: snap.id, ...snap.data() });
+          const data = snap.data();
+
+          setPost({
+            id: snap.id,
+            ...data,
+            reactions: data.reactions || {
+              like: 0,
+              celebrate: 0,
+              insightful: 0,
+              support: 0,
+              funny: 0,
+            },
+          });
         }
       } catch (err) {
         console.error("Error loading post:", err);
       }
     }
+
     fetchPost();
   }, [id]);
 
-  // ===========================
-  // 2. Load replies
-  // ===========================
-  async function loadReplies() {
+  /* ==========================================================
+     2️⃣ PAGINATED LOAD OF REPLIES
+     ========================================================== */
+  async function loadReplies(initial = false) {
     try {
-      const q = query(
+      if (initial) {
+        setReplies([]);
+        setLastDoc(null);
+      }
+
+      setLoadingMore(true);
+
+      let qBase = query(
         collection(db, "community_posts", id, "replies"),
-        orderBy("createdAt", "asc")
+        orderBy("createdAt", "asc"),
+        limit(REPLIES_PAGE_SIZE)
       );
 
-      const snap = await getDocs(q);
+      if (!initial && lastDoc) {
+        qBase = query(
+          collection(db, "community_posts", id, "replies"),
+          orderBy("createdAt", "asc"),
+          startAfter(lastDoc),
+          limit(REPLIES_PAGE_SIZE)
+        );
+      }
+
+      const snap = await getDocs(qBase);
 
       const list = snap.docs.map((d) => ({
         id: d.id,
         ...d.data(),
       }));
 
-      setReplies(list);
+      setReplies((prev) => (initial ? list : [...prev, ...list]));
+      setLastDoc(snap.docs[snap.docs.length - 1] || null);
+
+      setLoading(false);
+      setLoadingMore(false);
     } catch (err) {
       console.error("Error loading replies:", err);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
-    loadReplies();
+    loadReplies(true);
   }, [id]);
 
-  // ===========================
-  // 3. Submit a reply (with AI)
-  // ===========================
+  /* ==========================================================
+     3️⃣ ADD REPLY EMOJI REACTION
+     ========================================================== */
+  const addReplyReaction = async (replyId, emoji) => {
+    const key = reactionMap[emoji];
+    const ref = doc(db, "community_posts", id, "replies", replyId);
+
+    try {
+      await updateDoc(ref, {
+        [`replyReactions.${key}`]: increment(1),
+      });
+    } catch (err) {
+      console.error("Reaction error:", err);
+    }
+  };
+
+  /* ==========================================================
+     4️⃣ DELETE REPLY (author-only)
+     ========================================================== */
+  const deleteReply = async (replyId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await deleteDoc(doc(db, "community_posts", id, "replies", replyId));
+      loadReplies(true);
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
+
+  /* ==========================================================
+     5️⃣ SUBMIT REPLY (with AI)
+     ========================================================== */
   const submitReply = async () => {
     const user = auth.currentUser;
     if (!user) return alert("You must be logged in.");
@@ -80,62 +168,87 @@ function Thread() {
     setReplyText("");
 
     try {
-      // Save the user's reply
+      const userRef = doc(db, "users", user.uid);
+      const snap = await getDoc(userRef);
+      const username = snap.exists() ? snap.data().username : "User";
+
+      // Save user reply
       await addDoc(collection(db, "community_posts", id, "replies"), {
         text,
-        userEmail: user.email,
+        username,
         userId: user.uid,
         createdAt: Date.now(),
         isAI: false,
+        replyReactions: {
+          like: 0,
+          funny: 0,
+          heart: 0,
+          fire: 0,
+          helpful: 0,
+        },
       });
 
-      // Refresh immediately
-      await loadReplies();
+      await updateDoc(doc(db, "community_posts", id), {
+        updatedAt: Date.now(),
+      });
 
-      // Handle AI auto-response
-      const res = await axios.post(`${apiBase}/api/ai-reply`, {
+      // AI auto-response
+      const aiRes = await axios.post(`${apiBase}/api/ai-reply`, {
         message: text,
       });
 
-      const aiReply = res.data.reply || "Thanks for sharing — how can I help?";
+      const aiReply =
+        aiRes.data.reply || "I'm here to help — what can I clarify?";
 
       await addDoc(collection(db, "community_posts", id, "replies"), {
         text: aiReply,
-        userEmail: "EmployPilot AI",
+        username: "EmployPilot AI",
         userId: "ai_bot",
         createdAt: Date.now(),
         isAI: true,
+        replyReactions: {
+          like: 0,
+          funny: 0,
+          heart: 0,
+          fire: 0,
+          helpful: 0,
+        },
       });
 
-      // Reload replies
-      await loadReplies();
+      await updateDoc(doc(db, "community_posts", id), {
+        updatedAt: Date.now(),
+      });
+
+      loadReplies(true);
     } catch (err) {
-      console.error("Error posting reply:", err);
-      alert("Could not post reply.");
+      console.error("Reply error:", err);
     }
   };
 
-  if (!post) {
+  if (!post)
     return <div className="forum-loading">Loading post...</div>;
-  }
 
+  /* ==========================================================
+     UI RENDER
+     ========================================================== */
   return (
     <div className="thread-wrapper">
-
-      {/* Thread Header */}
+      {/* THREAD HEADER */}
       <div className="thread-card">
         <h2 className="thread-title">{post.title}</h2>
 
         <p className="thread-meta">
-          Posted by <strong>{post.userEmail}</strong> •{" "}
+          Posted by <strong>{post.username || "User"}</strong> •{" "}
           {new Date(post.createdAt).toLocaleString()} •{" "}
           <span className="thread-category">{post.category}</span>
         </p>
 
         <p className="thread-body">{post.body}</p>
+
+        <Reactions postId={id} post={post} />
       </div>
 
-      {/* Replies Section */}
+      {/* REPLIES */}
       <h3 className="reply-header">Replies</h3>
 
       <div className="reply-list">
@@ -151,19 +264,62 @@ function Thread() {
             >
               <p className="bubble-text">{r.text}</p>
 
-              <span className="bubble-meta">
-                {r.userEmail} •{" "}
-                {new Date(r.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
+              {/* Username Mention + Timestamp */}
+              <div className="bubble-meta">
+                <span
+                  className="username-mention"
+                  onClick={() => setReplyText(`@${r.username} `)}
+                >
+                  @{r.username || "User"}
+                </span>
+
+                <span className="bubble-meta-time">
+                  •{" "}
+                  {new Date(r.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+
+                {/* Delete button (author only) */}
+                {auth.currentUser?.uid === r.userId && (
+                  <button
+                    className="reply-delete-btn"
+                    onClick={() => deleteReply(r.id)}
+                  >
+                    🗑
+                  </button>
+                )}
+              </div>
+
+              {/* Reply Reactions */}
+              <div className="reply-reactions">
+                {["👍", "😂", "❤️", "🔥", "👏"].map((emoji) => (
+                  <span
+                    key={emoji}
+                    className="reply-react-btn"
+                    onClick={() => addReplyReaction(r.id, emoji)}
+                  >
+                    {emoji}{" "}
+                    {r.replyReactions?.[reactionMap[emoji]] > 0
+                      ? r.replyReactions[reactionMap[emoji]]
+                      : ""}
+                  </span>
+                ))}
+              </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Write a Reply */}
+      {/* LOAD MORE */}
+      {lastDoc && (
+        <button className="load-more-btn" onClick={() => loadReplies()}>
+          {loadingMore ? "Loading..." : "Load More Replies"}
+        </button>
+      )}
+
+      {/* REPLY BOX */}
       <div className="reply-box">
         <textarea
           className="reply-input"
@@ -181,3 +337,4 @@ function Thread() {
 }
 
 export default Thread;
+

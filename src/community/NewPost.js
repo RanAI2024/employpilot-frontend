@@ -1,105 +1,147 @@
-import React, { useState } from "react";
-import { addDoc, collection } from "firebase/firestore";
-import { db, auth } from "../firebase";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import "./community.css";
 
 function NewPost() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Auto-set category if user clicked "Create Post in X"
+  const prefillCategory = location.state?.category || "";
+
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [category, setCategory] = useState(prefillCategory);
+  const [username, setUsername] = useState("");
+  const [userLocation, setUserLocation] = useState("");
+
+  // Load username + location from user profile
+  useEffect(() => {
+    async function loadUser() {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        const data = snap.data();
+        setUsername(data.username || "User");
+        setUserLocation(data.location || "");
+      }
+    }
+    loadUser();
+  }, []);
 
   const categories = [
-    "Resume Writing",
-    "Interview Prep",
-    "Salary Negotiation",
-    "Job Search Tips",
-    "Career Growth",
-    "Success Stories",
+    { id: "strategies", label: "Strategies & Tips" },
+    { id: "interview-tips", label: "Interview Tips" },
+    { id: "success-stories", label: "Success Stories" },
+    { id: "salary-transparency", label: "Salary Transparency" },
+    { id: "remote-work", label: "Remote Work & Freelancing" },
+    { id: "resume-reviews", label: "Resume Reviews" },
+    { id: "tech-careers", label: "Tech Careers" },
+    { id: "career-change", label: "Breaking Into New Careers" },
+    { id: "workplace-issues", label: "Workplace Issues" },
+    { id: "networking", label: "Networking & Opportunities" },
   ];
 
-  const [form, setForm] = useState({
-    title: "",
-    body: "",
-    category: categories[0],
-  });
-
-  const [loading, setLoading] = useState(false);
-
-  const updateForm = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
   const submitPost = async () => {
-    if (!form.title.trim() || !form.body.trim()) {
-      alert("Please fill out all fields.");
-      return;
-    }
-
     const user = auth.currentUser;
     if (!user) return alert("You must be logged in.");
 
-    setLoading(true);
-
-    try {
-      const docRef = await addDoc(collection(db, "community_posts"), {
-  title: form.title,
-  body: form.body,
-  category: form.category,
-  userEmail: user.email,
-  userId: user.uid,
-  createdAt: Date.now(),
-});
-
-
-      navigate(`/community/thread/${docRef.id}`);
-    } catch (err) {
-      console.error("Error creating post:", err);
-      alert("Could not create post.");
+    if (!title.trim() || !body.trim() || !category) {
+      return alert("Please fill out all fields.");
     }
 
-    setLoading(false);
+    try {
+      // Create post
+      await addDoc(collection(db, "community_posts"), {
+        title: title.trim(),
+        body: body.trim(),
+        category,
+        username,
+        location: userLocation,
+        userId: user.uid,
+
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+
+        // Default reactions
+        reactions: {
+          like: 0,
+          celebrate: 0,
+          insightful: 0,
+          support: 0,
+          funny: 0,
+        },
+      });
+
+      navigate(`/community/topic/${category}`);
+    } catch (err) {
+      console.error("Error creating post:", err);
+      alert("Could not publish your post.");
+    }
   };
 
   return (
-    <div className="forum-wrapper">
-      <h1 className="forum-title">Create New Post</h1>
+    <div className="newpost-wrapper">
+      <h1 className="forum-title">Create a New Post</h1>
 
-      <div className="newpost-form">
-        
-        <label className="newpost-label">Title</label>
+      <div className="newpost-card">
+        {/* Title */}
         <input
           type="text"
-          name="title"
           className="newpost-input"
-          placeholder="Enter your discussion title..."
-          value={form.title}
-          onChange={updateForm}
+          placeholder="Post title..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
 
-        <label className="newpost-label">Category</label>
+        {/* Body */}
+        <textarea
+          className="newpost-textarea"
+          placeholder="Write your post here..."
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
+
+        {/* Category */}
         <select
-          name="category"
           className="newpost-select"
-          value={form.category}
-          onChange={updateForm}
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
         >
-          {categories.map((cat, i) => (
-            <option key={i} value={cat}>{cat}</option>
+          <option value="">Select a Topic...</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
           ))}
         </select>
 
-        <label className="newpost-label">Post Content</label>
-        <textarea
-          name="body"
-          className="newpost-textarea"
-          placeholder="Write your post here..."
-          value={form.body}
-          onChange={updateForm}
-        ></textarea>
-
-        <button className="newpost-btn" onClick={submitPost} disabled={loading}>
-          {loading ? "Posting..." : "Submit Post"}
+        {/* Submit Button */}
+        <button className="reply-btn" onClick={submitPost}>
+          Publish Post
         </button>
       </div>
+
+      {/* Back Button */}
+      <button
+        className="back-btn"
+        onClick={() => navigate("/community")}
+        style={{ marginTop: "20px" }}
+      >
+        ← Back to Community
+      </button>
     </div>
   );
 }

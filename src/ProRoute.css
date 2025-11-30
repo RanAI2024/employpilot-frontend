@@ -48,12 +48,13 @@
 
 .pro-upgrade-btn {
   background: linear-gradient(135deg, #AEBBFF 0%, #C9D6FF 100%);
-  padding: 12px 20px;
+  padding: 12px 24px;
   display: inline-block;
-  width: 100%;
+  width: auto;                /* FIXED: no full-width */
+  min-width: 180px;           /* clean, consistent button size */
   color: white;
   font-size: 16px;
-  border-radius: 12px;
+  border-radius: 8px;         /* smaller and cleaner */
   text-decoration: none;
   margin-bottom: 16px;
   font-weight: 600;

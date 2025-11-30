@@ -4,24 +4,23 @@ import axios from "axios";
 const apiBase = process.env.REACT_APP_API_URL;
 
 function Pricing() {
- const handleCheckout = async (plan) => {
-  try {
-    console.log("📤 Sending checkout request to:", `${apiBase}/api/create-checkout-session`);
-    const res = await axios.post(`${apiBase}/api/create-checkout-session`, { plan });
+  const handleCheckout = async (plan) => {
+    try {
+      console.log("📤 Sending checkout request to:", `${apiBase}/api/create-checkout-session`);
+      const res = await axios.post(`${apiBase}/api/create-checkout-session`, { plan });
 
-    console.log("✅ Stripe session response:", res.data);
+      console.log("✅ Stripe session response:", res.data);
 
-    if (res.data.url) {
-      window.location.href = res.data.url; // redirect to Stripe checkout
-    } else {
-      alert("Checkout session could not be created. " + JSON.stringify(res.data));
+      if (res.data.url) {
+        window.location.href = res.data.url; // redirect to Stripe checkout
+      } else {
+        alert("Checkout session could not be created. " + JSON.stringify(res.data));
+      }
+    } catch (error) {
+      console.error("❌ Stripe checkout error:", error.response ? error.response.data : error);
+      alert("Error starting checkout. Please try again.");
     }
-  } catch (error) {
-    console.error("❌ Stripe checkout error:", error.response ? error.response.data : error);
-    alert("Error starting checkout. Please try again.");
-  }
-};
-
+  };
 
   return (
     <div style={{
@@ -40,6 +39,8 @@ function Pricing() {
         flexWrap: "wrap",
         justifyContent: "center"
       }}>
+
+        {/* QUICK RESUME */}
         <div style={{
           backgroundColor: "#fff",
           borderRadius: "12px",
@@ -51,6 +52,7 @@ function Pricing() {
           <h2>Quick Resume</h2>
           <p>AI resume generator with a one-time fee.</p>
           <h3 style={{ color: "#007bff" }}>$1.99</h3>
+
           <button
             onClick={() => handleCheckout("one_time")}
             style={{
@@ -67,6 +69,7 @@ function Pricing() {
           </button>
         </div>
 
+        {/* EMPLOYPILOT PRO */}
         <div style={{
           backgroundColor: "#fff",
           borderRadius: "12px",
@@ -78,6 +81,7 @@ function Pricing() {
           <h2>EmployPilot Pro</h2>
           <p>Unlimited resume generation + premium templates.</p>
           <h3 style={{ color: "#28a745" }}>$5.99 / month</h3>
+
           <button
             onClick={() => handleCheckout("monthly")}
             style={{
@@ -92,21 +96,6 @@ function Pricing() {
           >
             Subscribe
           </button>
-          {/* ✅ Temporary Debug Button */}
-<button
-  onClick={() => window.open(`${apiBase}/api/test-checkout`, "_blank")}
-  style={{
-    marginTop: "40px",
-    padding: "10px 18px",
-    backgroundColor: "#444",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-  }}
->
-  Test API Connection
-</button>
 
         </div>
       </div>

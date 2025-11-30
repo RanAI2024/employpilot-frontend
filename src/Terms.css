@@ -1,0 +1,39 @@
+.terms-wrapper {
+  min-height: 100vh;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  background: #f5f5ff;
+}
+
+.terms-container {
+  max-width: 900px;
+  background: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.terms-container h1 {
+  font-size: 32px;
+  color: #4A4A8A;
+}
+
+.terms-container h2 {
+  margin-top: 25px;
+  font-size: 22px;
+  color: #444;
+}
+
+.terms-container p {
+  line-height: 1.7;
+  color: #555;
+  margin-top: 8px;
+}
+
+.terms-footer {
+  margin-top: 40px;
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+}

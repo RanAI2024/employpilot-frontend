@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
+import TopicPage from "./community/TopicPage";
+
+
+
 
 import Navbar from "./Navbar"; // ✅ IMPORTANT
 
@@ -10,6 +14,9 @@ import AuthPage from "./AuthPage";
 import Pricing from "./Pricing";
 import Success from "./Success";
 import Cancel from "./Cancel";
+import Terms from "./Terms";
+import Privacy from "./Privacy";
+import Contact from "./Contact";
 
 // Dashboard
 import Dashboard from "./Dashboard";
@@ -64,6 +71,9 @@ function App() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/contact" element={<Contact />} />
 
         {/* PROTECTED: Dashboard */}
         <Route
@@ -124,6 +134,16 @@ function App() {
             </ProRoute>
           }
         />
+
+<Route
+  path="/community/topic/:topicId"
+  element={
+    <ProRoute user={user}>
+      <TopicPage />
+    </ProRoute>
+  }
+/>
+
 
         {/* ======================
                AI TOOLS ROUTES

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { auth } from "./firebase";
 import "./Dashboard.css";
+import heroImg from "./assets/employpilot_hero.png";
 
 function Dashboard() {
   const apiBase = process.env.REACT_APP_API_URL;
@@ -42,7 +43,6 @@ function Dashboard() {
   };
 
   const handleDownloadPDF = () => {
-    // Pro Paywall → block free users
     setShowPaywall(true);
   };
 
@@ -52,102 +52,147 @@ function Dashboard() {
   };
 
   return (
-    <div className="dash-wrapper">
-      <div className="dash-container">
+    <>
+      {/* Background Overlay */}
+      <div
+        className="background-overlay"
+        style={{
+          backgroundImage: `url(${heroImg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+        }}
+      ></div>
 
-        {/* Header */}
-        <h2 className="dash-title">Welcome to EmployPilot ✨</h2>
-        <p className="dash-subtitle">
-          Your AI-powered resume builder and career assistant.
-        </p>
+      {/* Main Wrapper */}
+      <div className="dash-wrapper">
+        <div className="dash-hero">
+</div>
 
-        {/* Form */}
-        <div className="form-card">
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            onChange={handleChange}
-            className="input-field"
-          />
+        <div className="dash-container">
+          <h2 className="dash-title">Welcome to EmployPilot ✨</h2>
+  <p className="dash-subtitle">
+    Your AI-powered resume builder and career assistant.
+  </p>
 
-          <input
-            type="text"
-            name="role"
-            placeholder="Job Role"
-            onChange={handleChange}
-            className="input-field"
-          />
 
-          <input
-            type="text"
-            name="skills"
-            placeholder="Skills (comma separated)"
-            onChange={handleChange}
-            className="input-field"
-          />
+          
+          {/* Form */}
+          <div className="form-card">
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              onChange={handleChange}
+              className="input-field"
+            />
 
-          <textarea
-            name="experience"
-            placeholder="Work Experience"
-            onChange={handleChange}
-            className="textarea-field"
-          />
+            <input
+              type="text"
+              name="role"
+              placeholder="Job Role"
+              onChange={handleChange}
+              className="input-field"
+            />
 
-          <textarea
-            name="education"
-            placeholder="Education"
-            onChange={handleChange}
-            className="textarea-field"
-          />
+            <input
+              type="text"
+              name="skills"
+              placeholder="Skills (comma separated)"
+              onChange={handleChange}
+              className="input-field"
+            />
 
-          <button onClick={handleGenerate} disabled={loading} className="primary-btn">
-            {loading ? "Generating..." : "Generate Resume"}
-          </button>
-        </div>
+            <textarea
+              name="experience"
+              placeholder="Work Experience"
+              onChange={handleChange}
+              className="textarea-field"
+            />
 
-        {/* Resume Preview */}
-        {resume && (
-          <div className="resume-preview">
-            <h3 className="preview-title">AI Generated Resume</h3>
-            <pre className="resume-box">{resume}</pre>
+            <textarea
+              name="education"
+              placeholder="Education"
+              onChange={handleChange}
+              className="textarea-field"
+            />
 
-            {/* PDF Download Button - Paywall */}
-            <button className="download-btn" onClick={handleDownloadPDF}>
-              Download PDF (Pro Only)
+            <button
+              onClick={handleGenerate}
+              disabled={loading}
+              className="primary-btn"
+            >
+              {loading ? "Generating..." : "Generate Resume"}
             </button>
           </div>
-        )}
 
-        {/* Logout */}
-        <button onClick={handleLogout} className="logout-btn">
-          Logout
-        </button>
-      </div>
+          {/* Resume Preview */}
+          {resume && (
+            <div className="resume-preview">
+              <h3 className="preview-title">AI Generated Resume</h3>
+              <pre className="resume-box">{resume}</pre>
 
-      {/* PRO PAYWALL MODAL */}
-      {showPaywall && (
-        <div className="paywall-overlay" onClick={() => setShowPaywall(false)}>
-          <div className="paywall-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="paywall-title">Unlock PDF Downloads</h3>
-            <p className="paywall-desc">
-              Upgrade to EmployPilot Pro to unlock unlimited PDF downloads, premium templates,
-              AI cover letters, interview prep tools, and access to the Career Lounge.
-            </p>
-
-            <div className="paywall-buttons">
-              <a href="/pricing" className="paywall-btn-primary">Upgrade to Pro</a>
-              <button className="paywall-btn-secondary" onClick={() => setShowPaywall(false)}>
-                Not Now
+              <button
+                className="download-btn"
+                onClick={handleDownloadPDF}
+              >
+                Download PDF (Pro Only)
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-    </div>
+          {/* Logout */}
+          <button onClick={handleLogout} className="logout-btn">
+            Logout
+          </button>
+        </div>
+       <footer className="footer">
+  © 2025 EmployPilot. All Rights Reserved. 
+  <a href="/terms" className="footer-link">Terms of Use</a>
+  <span className="footer-separator">•</span>
+  <a href="/privacy" className="footer-link">Privacy Policy</a>
+  <span className="footer-separator">•</span>
+  <a href="mailto:support@employpilot.com" className="footer-link">Contact</a>
+</footer>
+
+
+        {/* Paywall Modal */}
+        {showPaywall && (
+          <div
+            className="paywall-overlay"
+            onClick={() => setShowPaywall(false)}
+          >
+            <div
+              className="paywall-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="paywall-title">Unlock PDF Downloads</h3>
+              <p className="paywall-desc">
+                Upgrade to EmployPilot Pro to unlock unlimited PDF downloads,
+                premium templates, AI cover letters, interview prep tools, and
+                access to the Career Lounge.
+              </p>
+
+              <div className="paywall-buttons">
+                <a href="/pricing" className="paywall-btn-primary">
+                  Upgrade to Pro
+                </a>
+                <button
+                  className="paywall-btn-secondary"
+                  onClick={() => setShowPaywall(false)}
+                >
+                  Not Now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
 export default Dashboard;
+
+
 

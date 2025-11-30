@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "../../community.css";
+import "../community.css";
 
 function CareerAdvisor() {
   const [topic, setTopic] = useState("");

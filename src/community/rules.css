@@ -1,0 +1,52 @@
+.rules-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.rules-card {
+  background: #fff;
+  padding: 32px;
+  width: 550px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  text-align: left;
+}
+
+.rules-title {
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: #4A4A8A;
+  text-align: center;
+}
+
+.rules-desc {
+  margin-bottom: 16px;
+  color: #444;
+}
+
+.rules-list li {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.rules-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: #9aaaff;
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.rules-btn:hover {
+  background: #8895ff;
+}
