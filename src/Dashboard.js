@@ -147,12 +147,10 @@ function Dashboard() {
           </button>
         </div>
        <footer className="footer">
-  © 2025 EmployPilot. All Rights Reserved. 
-  <a href="/terms" className="footer-link">Terms of Use</a>
-  <span className="footer-separator">•</span>
-  <a href="/privacy" className="footer-link">Privacy Policy</a>
-  <span className="footer-separator">•</span>
-  <a href="mailto:support@employpilot.com" className="footer-link">Contact</a>
+   © 2025 EmployPilot. All Rights Reserved.
+  <Link to="/terms" className="terms-link">Terms of Use</Link>
+  <Link to="/privacy" className="terms-link">Privacy Policy</Link>
+  <Link to="/contact" className="terms-link">Contact</Link>
 </footer>
 
 
